@@ -29,7 +29,7 @@ class ResumeCreate(ResumeBase):
 class ResumeResponse(ResumeBase):
     resume_id: int
     account_id: int
-    upload_time: datetime
+    uploaded_at: datetime
 
     class Config:
         from_attributes = True

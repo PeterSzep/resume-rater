@@ -1,15 +1,26 @@
 from sqlalchemy.orm import Session
 import models, schemas
-
+from datetime import datetime, timezone 
+import bcrypt
+#Accounts
 def get_accounts(db: Session):
     return db.query(models.Accounts).all()
 
 def get_account_by_email(db: Session, email: str):
     return db.query(models.Accounts).filter(models.Accounts.email == email).first()
 
+def get_account_by_username(db: Session, username: str):
+    return db.query(models.Accounts).filter(models.Accounts.username == username).first()
+
 def create_account(db: Session, account: schemas.AccountCreate):
-    db_account = models.Accounts(**account.model_dump())
-    
+    s = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(account.password.encode('utf-8'), s)
+    db_account = models.Accounts(
+        username=account.username,
+        email=account.email,
+        password=hashed_password,
+        created_on=datetime.now(timezone.utc) 
+    )
     db.add(db_account)
     db.commit()
     db.refresh(db_account)
@@ -22,11 +33,15 @@ def delete_account(db: Session, user_id: int):
         db.commit()
     return account
 
-def get_resumes(db: Session, account_id: int):
+#Resumes
+def get_resumes_for_account(db: Session, account_id: int):
     return db.query(models.Resumes).filter(models.Resumes.account_id == account_id).all()
 
-def get_resume(db: Session, resume_id: int):
+def get_resume_by_id(db: Session, resume_id: int):
     return db.query(models.Resumes).filter(models.Resumes.resume_id == resume_id).first()
+
+def get_resumes(db: Session):
+    return db.query(models.Resumes).all()
 
 def create_resume(db: Session, resume: schemas.ResumeCreate):
     db_resume = models.Resumes(**resume.model_dump())
@@ -43,14 +58,23 @@ def delete_resume(db: Session, resume_id: int):
         db.commit()
     return resume
 
+#Ratings
 
-def get_ratings(db: Session, resume_id: int):
-    return db.query(models.Rating).filter(models.Rating.resume_id == resume_id).first()
 
-def get_rating(db: Session, rating_id: int):
-    return db.query(models.Rating).filter(models.Rating.id == rating_id).first()
+def get_rating_for_resume(db: Session, resume_id: int, rating_id: int):
+    return db.query(models.Rating).filter(
+        models.Rating.id == rating_id,
+        models.Rating.resume_id == resume_id
+    ).first()
 
-def create_rating(db: Session, rating: schemas.RatingResponse):
+
+def get_ratings_for_resume(db: Session, resume_id: int):
+    return db.query(models.Rating).filter(models.Rating.resume_id == resume_id).all()
+
+def get_ratings(db: Session):
+    return db.query(models.Rating).all()
+
+def create_rating(db: Session, rating: schemas.RatingCreate):
     db_rating = models.Rating(**rating.model_dump())
     
     db.add(db_rating)
@@ -58,8 +82,12 @@ def create_rating(db: Session, rating: schemas.RatingResponse):
     db.refresh(db_rating)
     return db_rating
 
-def delete_rating(db: Session, rating_id: int):
-    rating = db.query(models.Rating).filter(models.Rating.id == rating_id).first()
+def delete_rating(db: Session, rating_id: int, resume_id: int):
+    rating = db.query(models.Rating).filter(
+        models.Rating.id == rating_id,
+        models.Rating.resume_id == resume_id
+    ).first()
+
     if rating:
         db.delete(rating)
         db.commit()

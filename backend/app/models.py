@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, TEXT, Column, DateTime, Float, ForeignKey, Integer,TIMESTAMP, VARCHAR, Text
+from sqlalchemy import JSON, TEXT, Column, Float, ForeignKey, Integer,TIMESTAMP, VARCHAR, Text
 from database import Base
 import datetime
 from sqlalchemy.orm import relationship
@@ -8,12 +8,12 @@ class Accounts(Base):
 
     user_id = Column(Integer, primary_key=True, index=True)
     username = Column(VARCHAR(50), unique=True, index=True, nullable=False)
-    password = Column(VARCHAR(50), nullable=False)
+    password = Column(VARCHAR(255), nullable=False)
     email = Column(VARCHAR(355), unique=True, index=True, nullable=False)
     created_on = Column(TIMESTAMP, nullable=False)
     last_login = Column(TIMESTAMP)
 
-    resumes = relationship("Resumes", back_populates="owner")
+    resumes = relationship("Resumes", back_populates="owner", passive_deletes=True)
 
 class Resumes(Base):
     __tablename__ = 'resumes'
@@ -24,7 +24,7 @@ class Resumes(Base):
     original_filename = Column(VARCHAR(255), nullable=False)
     file_path = Column(VARCHAR(500), nullable=False)
     extracted_text = Column(TEXT, nullable=False)
-    upload_time = Column(TIMESTAMP, nullable=False, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    uploaded_at = Column(TIMESTAMP, nullable=False, default=lambda: datetime.datetime.now(datetime.timezone.utc))
     file_size = Column(Integer, nullable=False)
 
     owner = relationship("Accounts", back_populates="resumes")
@@ -34,7 +34,7 @@ class Rating(Base):
     __tablename__ = "ratings"
     
     id = Column(Integer, primary_key=True, index=True)
-    resume_id = Column(Integer, ForeignKey("resumes.resume_id", ondelete="CASCADE"), nullable=False, unique=True)
+    resume_id = Column(Integer, ForeignKey("resumes.resume_id", ondelete="CASCADE"), nullable=False)
     
     overall_score = Column(Float, nullable=False)  
     criteria_scores = Column(JSON, nullable=False)
