@@ -4,8 +4,22 @@ from typing import List
 import models
 import schemas, crud
 from database import get_db
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,            # Allows specific origins
+    allow_credentials=True,
+    allow_methods=["*"],              # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],              # Allows all headers
+)
 
 ### Account Endpoints ###
 @app.get("/accounts/{email}", response_model=schemas.AccountResponse)
@@ -22,13 +36,9 @@ async def read_accounts(db: Session = Depends(get_db)):
 @app.post("/accounts/", response_model=schemas.AccountResponse)
 async def create_account(account: schemas.AccountCreate, db: Session = Depends(get_db)):
     existing_email = crud.get_account_by_email(db, email=account.email)
-    existing_username = crud.get_account_by_username(db, username=account.username)
 
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
-    if existing_username:
-        raise HTTPException(status_code=400, detail="Username already registered")
     
     return crud.create_account(db=db, account=account)
 

@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 
 class AccountBase(BaseModel):
-    username: str
+    full_name: str
     email: str
 
 class AccountCreate(AccountBase):

@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 import models, schemas
 from datetime import datetime, timezone 
 import bcrypt
+
 #Accounts
 def get_accounts(db: Session):
     return db.query(models.Accounts).all()
@@ -16,7 +17,7 @@ def create_account(db: Session, account: schemas.AccountCreate):
     s = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(account.password.encode('utf-8'), s)
     db_account = models.Accounts(
-        username=account.username,
+        full_name=account.full_name,
         email=account.email,
         password=hashed_password,
         created_on=datetime.now(timezone.utc) 

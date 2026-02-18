@@ -7,7 +7,7 @@ class Accounts(Base):
     __tablename__ = 'accounts' 
 
     user_id = Column(Integer, primary_key=True, index=True)
-    username = Column(VARCHAR(50), unique=True, index=True, nullable=False)
+    full_name = Column(VARCHAR(100), index=True, nullable=False)
     password = Column(VARCHAR(255), nullable=False)
     email = Column(VARCHAR(355), unique=True, index=True, nullable=False)
     created_on = Column(TIMESTAMP, nullable=False)
