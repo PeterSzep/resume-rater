@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL;
+import { BASE_URL } from './index';
 
 export async function regsiterUser(name : string, email : string, password : string) {
     const response = await fetch(`${BASE_URL}/accounts/`, {
