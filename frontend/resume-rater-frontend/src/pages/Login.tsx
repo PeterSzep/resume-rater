@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useState } from "react";
 import { type LoginFieldErrors, loginSchema } from "../types/userTypes";
+import { loginUser } from "../api/users";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -28,8 +29,10 @@ export default function Login() {
 
     setErrors({});
     setServerError(null);
+
     try {
-      // TODO: call login API
+      const result = await loginUser(email, password);
+      //console.log("Login successful:", result);
       navigate("/home", { replace: true });
     } catch (error) {
       setServerError(error instanceof Error ? error.message : "Login failed. Please try again.");

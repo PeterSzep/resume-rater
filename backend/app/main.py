@@ -22,11 +22,11 @@ app.add_middleware(
 )
 
 ### Account Endpoints ###
-@app.get("/accounts/{email}", response_model=schemas.AccountResponse)
-async def read_account(email: str, db: Session = Depends(get_db)):
-    account = crud.get_account_by_email(db, email=email)
+@app.post("/accounts/login", response_model=schemas.AccountResponse)
+async def read_account(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
+    account = crud.get_account_by_email_password(db, email=credentials.email, password=credentials.password)
     if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
+        raise HTTPException(status_code=404, detail="Account not found or incorrect password")
     return account
 
 @app.get("/accounts/", response_model=List[schemas.AccountResponse])
@@ -35,7 +35,7 @@ async def read_accounts(db: Session = Depends(get_db)):
 
 @app.post("/accounts/", response_model=schemas.AccountResponse)
 async def create_account(account: schemas.AccountCreate, db: Session = Depends(get_db)):
-    existing_email = crud.get_account_by_email(db, email=account.email)
+    existing_email = crud.get_account_by_email_password(db, email=account.email, password=account.password)
 
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already registered")

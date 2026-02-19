@@ -9,6 +9,10 @@ class AccountBase(BaseModel):
 class AccountCreate(AccountBase):
     password: str
 
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
 class AccountResponse(AccountBase):
     user_id: int
     created_on: datetime

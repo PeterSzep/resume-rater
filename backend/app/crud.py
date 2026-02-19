@@ -7,12 +7,15 @@ import bcrypt
 def get_accounts(db: Session):
     return db.query(models.Accounts).all()
 
-def get_account_by_email(db: Session, email: str):
-    return db.query(models.Accounts).filter(models.Accounts.email == email).first()
+def get_account_by_email_password(db: Session, email: str, password: str):
+    account = db.query(models.Accounts).filter(models.Accounts.email == email).first()
+    if account and bcrypt.checkpw(password.encode('utf-8'), account.password.encode('utf-8')):
+        return account
+    return None
 
 def create_account(db: Session, account: schemas.AccountCreate):
     s = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(account.password.encode('utf-8'), s)
+    hashed_password = bcrypt.hashpw(account.password.encode('utf-8'), s).decode('utf-8')
     db_account = models.Accounts(
         full_name=account.full_name,
         email=account.email,
