@@ -10,9 +10,6 @@ def get_accounts(db: Session):
 def get_account_by_email(db: Session, email: str):
     return db.query(models.Accounts).filter(models.Accounts.email == email).first()
 
-def get_account_by_username(db: Session, username: str):
-    return db.query(models.Accounts).filter(models.Accounts.username == username).first()
-
 def create_account(db: Session, account: schemas.AccountCreate):
     s = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(account.password.encode('utf-8'), s)

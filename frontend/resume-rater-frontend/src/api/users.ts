@@ -20,3 +20,23 @@ export async function regsiterUser(name : string, email : string, password : str
         throw new Error(errorData.detail || 'Failed to register user');
     }
 }
+
+export async function loginUser(email : string, password : string){
+    const response = await fetch(`${BASE_URL}/accounts/${email}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({  
+            email: email,
+            password: password,
+        }),
+    });
+
+    if(response.ok) {
+        return await response.json();
+    } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to login user');
+    }
+}

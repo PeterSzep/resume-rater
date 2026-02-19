@@ -3,17 +3,7 @@ import { regsiterUser } from "../api/users";
 import { z } from "zod";
 import { useState } from "react";
 import { type FieldErrors } from "../types/userTypes";
-
-const registrationSchema = z.object({
-  name: z
-    .string()
-    .min(5, "Name must be at least 5 characters")
-    .regex(/^[a-zA-Z\s]+$/, "Name can only contain letters and spaces"),
-  email: z.email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
-
-
+import { registrationSchema } from "../types/userTypes";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -23,13 +13,14 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [retypePassword, setRetypePassword] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     const newErrors: FieldErrors = {};
 
     const validation = registrationSchema.safeParse({ name, email, password });
     if (!validation.success) {
-      const fieldErrors = validation.error.flatten().fieldErrors;
+      const fieldErrors = z.flattenError(validation.error).fieldErrors;
       if (fieldErrors.name?.[0]) newErrors.name = fieldErrors.name[0];
       if (fieldErrors.email?.[0]) newErrors.email = fieldErrors.email[0];
       if (fieldErrors.password?.[0]) newErrors.password = fieldErrors.password[0];
@@ -45,13 +36,17 @@ export default function Register() {
     }
 
     setErrors({});
+    setServerError(null);
     try {
       const result = await regsiterUser(name, email, password);
+      //console.log("Registration successful:", result);
       if (result) {
-        navigate("/");
+        navigate("/home", { replace: true });
+      }else{
+        throw new Error(JSON.stringify(result.errors));
       }
     } catch (error) {
-      console.error("Registration failed:", error);
+      setServerError(error instanceof Error ? error.message : "Registration failed. Please try again.");
     }
   };
 
@@ -238,6 +233,13 @@ export default function Register() {
                 )}
               </div>
             </div>
+
+            {serverError && (
+              <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-2.5">
+                <span className="material-symbols-outlined text-red-500 text-base">error</span>
+                <p className="text-red-600 dark:text-red-400 text-sm">{serverError}</p>
+              </div>
+            )}
 
             <button
               type="submit"
