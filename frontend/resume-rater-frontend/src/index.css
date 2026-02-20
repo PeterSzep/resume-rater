@@ -7,6 +7,7 @@
 @theme {
   --color-primary: #6A5ACD;
   --color-background-dark: #0f172a;
+  --color-background-light: #f6f6f8;
   --color-glaucous: #6082B6;
   --color-slate-blue: #6A5ACD;
   --color-alice-blue: #F0F8FF;
@@ -30,6 +31,15 @@
     filter: blur(80px);
     z-index: 0;
     opacity: 0.5;
+  }
+  .main-gradient {
+    background: linear-gradient(135deg, #f0f4f8 0%, #ffffff 100%);
+  }
+  .glass-card-light {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(113, 94, 237, 0.1);
   }
 }
 
