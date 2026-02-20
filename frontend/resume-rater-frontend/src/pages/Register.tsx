@@ -4,9 +4,11 @@ import { z } from "zod";
 import { useState } from "react";
 import { type FieldErrors } from "../types/userTypes";
 import { registrationSchema } from "../types/userTypes";
+import { useUser } from "../context/UserContext";
 
 export default function Register() {
   const navigate = useNavigate();
+  const { login } = useUser();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -39,8 +41,8 @@ export default function Register() {
     setServerError(null);
     try {
       const result = await regsiterUser(name, email, password);
-      //console.log("Registration successful:", result);
       if (result) {
+        login({ user_id: result.user_id, full_name: result.full_name, email: result.email });
         navigate("/home", { replace: true });
       }else{
         throw new Error(JSON.stringify(result.errors));

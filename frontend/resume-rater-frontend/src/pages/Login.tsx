@@ -3,9 +3,11 @@ import { z } from "zod";
 import { useState } from "react";
 import { type LoginFieldErrors, loginSchema } from "../types/userTypes";
 import { loginUser } from "../api/users";
+import { useUser } from "../context/UserContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useUser();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +34,7 @@ export default function Login() {
 
     try {
       const result = await loginUser(email, password);
-      //console.log("Login successful:", result);
+      login({ user_id: result.user_id, full_name: result.full_name, email: result.email });
       navigate("/home", { replace: true });
     } catch (error) {
       setServerError(error instanceof Error ? error.message : "Login failed. Please try again.");
