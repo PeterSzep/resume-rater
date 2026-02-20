@@ -21,7 +21,7 @@ export async function regsiterUser(name : string, email : string, password : str
     }
 }
 
-export async function loginUser(email : string, password : string){
+export async function loginUser(email : string, password : string, ) {
     const response = await fetch(`${BASE_URL}/accounts/login`, {
         method: 'POST',
         headers: {

@@ -9,6 +9,8 @@ def get_accounts(db: Session):
 
 def get_account_by_email_password(db: Session, email: str, password: str):
     account = db.query(models.Accounts).filter(models.Accounts.email == email).first()
+    db.query(models.Accounts).filter(models.Accounts.email == email).update({"last_login": datetime.now(timezone.utc)})
+    db.commit()
     if account and bcrypt.checkpw(password.encode('utf-8'), account.password.encode('utf-8')):
         return account
     return None

@@ -34,7 +34,8 @@ export default function Login() {
 
     try {
       const result = await loginUser(email, password);
-      login({ user_id: result.user_id, full_name: result.full_name, email: result.email });
+      login({ user_id: result.user_id, full_name: result.full_name, email: result.email, last_login: result.last_login });
+      console.log("Login successful:", result);
       navigate("/home", { replace: true });
     } catch (error) {
       setServerError(error instanceof Error ? error.message : "Login failed. Please try again.");
