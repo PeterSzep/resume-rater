@@ -1,37 +1,66 @@
+import { useState, useEffect } from "react";
 import { useUser } from "../context/UserContext";
 import Navbar from "../components/Navbar";
 import StatsCard from "../components/StatsCard";
 import ResumeCard from "../components/ResumeCard";
 import UploadResume from "../components/UploadResume";
 import { type ResumeStats } from "../types/resumeTypes";
+import { getResumesForAccount, getLatestResumesForAccount } from "../api/resumes";
+import { getRatingsForAccount, getRatingsForResume } from "../api/ratings";
 
-{/*Mock Resume Data*/ }
-const recentResumes: ResumeStats[] = [
-  {
-    id: 1,
-    name: "Software Engineer Senior Role",
-    date: "Oct 24, 2023",
-    status: "Optimized",
-    score: 98,
-  },
-  {
-    id: 2,
-    name: "Product Manager CV - Final",
-    date: "Oct 22, 2023",
-    status: "Needs Improvement",
-    score: 65,
-  },
-  {
-    id: 3,
-    name: "Data Scientist Draft 2",
-    date: "Oct 20, 2023",
-    status: "Optimized",
-    score: 82,
-  },
-];
 
-export default function Home() {
+const Home = () => {
   const { user } = useUser();
+
+  const [latestResumes, setLatestResumes] = useState<ResumeStats[]>([]);
+  const [highestScore, setHighestScore] = useState<number | "N/A">("N/A");
+  const [averageScore, setAverageScore] = useState<number | "N/A">("N/A");
+  const [resumeCount, setResumeCount] = useState<number | "N/A">("N/A");
+  const [ratingsCount, setRatingsCount] = useState<number | "N/A">("N/A");
+
+  useEffect(() => {
+    if (!user) return;
+
+    getResumesForAccount(user)
+      .then((resumes) => {
+        setResumeCount(resumes.length);
+      })
+      .catch(() => setResumeCount("N/A"));
+    
+    getLatestResumesForAccount(user).then(async (resumes) => {
+      const resumeStats = await Promise.all(
+        resumes.map(async (resume) => {
+          const ratings = await getRatingsForResume(user.user_id, resume.resume_id);
+          const latest = ratings[0];
+          const score = latest?.overall_score ?? 0;
+          return {
+            resume_id: resume.resume_id,
+            name: resume.original_filename,
+            date: new Date(resume.uploaded_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+            score,
+            status: (score >= 80 ? "Optimized" : "Needs Improvement") as ResumeStats["status"],
+          };
+        })
+      );
+      setLatestResumes(resumeStats);
+    }).catch(() => setLatestResumes([]));
+
+    getRatingsForAccount(user)
+      .then((ratings) => {
+        if (ratings.length === 0) {
+          setHighestScore("N/A");
+          setAverageScore("N/A");
+          setRatingsCount("N/A");
+        } else {
+          const max = Math.max(...ratings.map((r) => r.overall_score));
+          setHighestScore(max);
+          const avg = ratings.reduce((sum, r) => sum + r.overall_score, 0) / ratings.length;
+          setAverageScore(avg);
+          setRatingsCount(ratings.length);
+        }
+      })
+      .catch(() => setHighestScore("N/A"));
+  }, [user]);
 
   const firstName = user?.full_name?.split(" ")[0] ?? "there";
 
@@ -58,20 +87,19 @@ export default function Home() {
             <StatsCard
               icon="military_tech"
               title="Highest Score"
-              optionalText="+2.4%"
-              text="98"
+              text={String(highestScore)}
               outOf="/100"
             />
 
-            <StatsCard icon="description" title="Total Resumes" text="12" />
+            <StatsCard icon="description" title="Total Resumes" text={String(resumeCount)} />
 
-            <StatsCard icon="fact_check" title="Reviews Completed" text="45" />
+            <StatsCard icon="fact_check" title="Reviews Completed" text={String(ratingsCount)} />
 
             <StatsCard
               icon="analytics"
               title="Average Score"
-              text="82"
-              optionalText="Overral"
+              text={String(averageScore)}
+              optionalText="Overall"
               outOf="/100"
             />
           </div>
@@ -111,7 +139,7 @@ export default function Home() {
                       </th>
                     </tr>
                   </thead>
-                  <ResumeCard resume={recentResumes} />
+                  <ResumeCard resume={latestResumes} />
                 </table>
               </div>
             </div>
@@ -122,3 +150,5 @@ export default function Home() {
     </div>
   );
 }
+
+export default Home;

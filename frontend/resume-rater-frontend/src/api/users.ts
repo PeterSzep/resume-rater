@@ -33,7 +33,6 @@ export async function loginUser(email : string, password : string, ) {
         }),
     });
 
-
     if(response.ok) {
         return await response.json();
     } else {

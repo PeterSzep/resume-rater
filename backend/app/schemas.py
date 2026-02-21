@@ -39,7 +39,7 @@ class ResumeResponse(ResumeBase):
         from_attributes = True
 
 class RatingResponse(BaseModel):
-    id: int
+    ratings_id: int
     resume_id: int
     overall_score: float
     criteria_scores: Dict[str, Any]

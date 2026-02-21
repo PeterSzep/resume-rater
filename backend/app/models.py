@@ -33,7 +33,7 @@ class Resumes(Base):
 class Rating(Base):
     __tablename__ = "ratings"
     
-    id = Column(Integer, primary_key=True, index=True)
+    ratings_id = Column(Integer, primary_key=True, index=True)
     resume_id = Column(Integer, ForeignKey("resumes.resume_id", ondelete="CASCADE"), nullable=False)
     
     overall_score = Column(Float, nullable=False)  

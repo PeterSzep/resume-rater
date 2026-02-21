@@ -43,6 +43,9 @@ def get_resumes_for_account(db: Session, account_id: int):
 def get_resume_by_id(db: Session, resume_id: int):
     return db.query(models.Resumes).filter(models.Resumes.resume_id == resume_id).first()
 
+def get_newest_resumes_for_account(db: Session, account_id: int):
+    return db.query(models.Resumes).filter(models.Resumes.account_id == account_id).order_by(models.Resumes.uploaded_at.desc()).limit(3).all()
+
 def get_resumes(db: Session):
     return db.query(models.Resumes).all()
 
@@ -62,11 +65,9 @@ def delete_resume(db: Session, resume_id: int):
     return resume
 
 #Ratings
-
-
 def get_rating_for_resume(db: Session, resume_id: int, rating_id: int):
     return db.query(models.Rating).filter(
-        models.Rating.id == rating_id,
+        models.Rating.rating_id == rating_id,
         models.Rating.resume_id == resume_id
     ).first()
 
@@ -74,8 +75,8 @@ def get_rating_for_resume(db: Session, resume_id: int, rating_id: int):
 def get_ratings_for_resume(db: Session, resume_id: int):
     return db.query(models.Rating).filter(models.Rating.resume_id == resume_id).all()
 
-def get_ratings(db: Session):
-    return db.query(models.Rating).all()
+def get_ratings_for_account(db: Session, account_id: int):
+    return db.query(models.Rating).join(models.Resumes).filter(models.Resumes.account_id == account_id).all()
 
 def create_rating(db: Session, rating: schemas.RatingCreate):
     db_rating = models.Rating(**rating.model_dump())
@@ -87,7 +88,7 @@ def create_rating(db: Session, rating: schemas.RatingCreate):
 
 def delete_rating(db: Session, rating_id: int, resume_id: int):
     rating = db.query(models.Rating).filter(
-        models.Rating.id == rating_id,
+        models.Rating.rating_id == rating_id,
         models.Rating.resume_id == resume_id
     ).first()
 

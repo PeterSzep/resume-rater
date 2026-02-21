@@ -62,6 +62,13 @@ async def read_resume(resume_id: int, db: Session = Depends(get_db)):
 async def read_resumes(db: Session = Depends(get_db)):
     return crud.get_resumes(db)
 
+@app.get("/accounts/{account_id}/resumes/newest", response_model=List[schemas.ResumeResponse])
+async def read_newest_resumes_for_account(account_id: int, db: Session = Depends(get_db)):
+    account = db.query(models.Accounts).filter(models.Accounts.user_id == account_id).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+    return crud.get_newest_resumes_for_account(db, account_id=account_id)
+
 @app.get("/accounts/{account_id}/resumes", response_model=List[schemas.ResumeResponse])
 async def read_resumes_for_account(account_id: int, db: Session = Depends(get_db)):
     account = db.query(models.Accounts).filter(models.Accounts.user_id == account_id).first()
@@ -99,17 +106,13 @@ async def read_rating_for_a_resume(resume_id: int, rating_id: int, db: Session =
         raise HTTPException(status_code=404, detail="Rating not found")
     return rating
 
-@app.get("/resumes/{resume_id}/ratings", response_model=List[schemas.RatingResponse])
-async def read_ratings_for_resume(resume_id: int, db: Session = Depends(get_db)):
+@app.get("/accounts/{account_id}/resumes/{resume_id}/ratings", response_model=List[schemas.RatingResponse])
+async def read_ratings_for_resume(account_id: int, resume_id: int, db: Session = Depends(get_db)):
     ratings = crud.get_ratings_for_resume(db, resume_id=resume_id)
 
     if not ratings:
         raise HTTPException(status_code=404, detail="Ratings not found")
     return ratings
-
-@app.get("/ratings/", response_model=List[schemas.RatingResponse])
-async def read_ratings(db: Session = Depends(get_db)):
-    return crud.get_ratings(db)
 
 @app.post("/resumes/{resume_id}/ratings/", response_model=schemas.RatingResponse)
 async def create_rating(resume_id: int, rating: schemas.RatingCreate, db: Session = Depends(get_db)):

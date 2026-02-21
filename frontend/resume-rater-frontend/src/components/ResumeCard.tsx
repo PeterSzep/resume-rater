@@ -4,7 +4,7 @@ const ResumeCard = ({ resume }: { resume: ResumeStats[] }) => {
   return (
     <tbody className="divide-y divide-slate-100">
       {resume.map((r) => (
-        <tr key={r.id} className="hover:bg-white/50 transition-colors">
+        <tr key={r.resume_id} className="hover:bg-white/50 transition-colors">
           <td className="px-6 py-4">
             <div className="flex items-center gap-3">
               <div className="bg-primary/10 p-2 rounded">
