@@ -1,5 +1,5 @@
 import type { User } from "../context/UserContext";
-import type { Resume, ResumeStats } from "../types/resumeTypes";
+import type { Resume } from "../types/resumeTypes";
 import { BASE_URL } from "./index";
 
 
