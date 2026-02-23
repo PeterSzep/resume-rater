@@ -7,6 +7,7 @@ venv/
 # Python cache
 __pycache__/
 *.py[cod]
+uploads/
 
 # OS files
 .DS_Store

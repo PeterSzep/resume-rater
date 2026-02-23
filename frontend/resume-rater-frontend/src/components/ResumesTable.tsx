@@ -8,61 +8,38 @@ import { getRatingsForResume } from "../api/ratings";
 const ResumesTable = ({ isHome }: { isHome: boolean }) => {
   const { user } = useUser();
 
-  const [latestResumes, setLatestResumes] = useState<ResumeStats[]>([]);
   const [resumes, setResumes] = useState<ResumeStats[]>([]);
 
   useEffect(() => {
     if (!user) return;
 
-    if(isHome){
-        getLatestResumesForAccount(user)
-      .then(async (resumes) => {
-        const resumeStats = await Promise.all(
-          resumes.map(async (resume) => {
-            const ratings = await getRatingsForResume(
-              user.user_id,
-              resume.resume_id,
-            );
-            const latest = ratings[0];
-            const score = latest?.overall_score ?? 0;
-            return {
-              resume_id: resume.resume_id,
-              name: resume.original_filename,
-              date: new Date(resume.uploaded_at).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              }),
-              score,
-              status: (score >= 80
-                ? "Optimized"
-                : "Needs Improvement") as ResumeStats["status"],
-            };
-          }),
-        );
-        setLatestResumes(resumeStats);
-      })
-      .catch(() => setLatestResumes([]));
-    }else{
-              getResumesForAccount(user).then(async (resumes) => {
-            const resumeStats = await Promise.all(
-                resumes.map(async (resume) => {
-                  const ratings = await getRatingsForResume(user.user_id, resume.resume_id);
-                  const latest = ratings[0];
-                  const score = latest?.overall_score ?? 0;
-                  return {
-                    resume_id: resume.resume_id,
-                    name: resume.original_filename,
-                    date: new Date(resume.uploaded_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
-                    score,
-                    status: (score >= 80 ? "Optimized" : "Needs Improvement") as ResumeStats["status"],
-                  };
-                })
-              );
-              setResumes(resumeStats);
-        }).catch(() => setResumes([]));
+    async function fetchResumeStats() {
+      const rawResumes = await (isHome
+        ? getLatestResumesForAccount(user!)
+        : getResumesForAccount(user!));
+
+      return Promise.all(
+        rawResumes.map(async (resume) => {
+          const ratings = await getRatingsForResume(user!.user_id, resume.resume_id);
+          const score = ratings[0]?.overall_score ?? 0;
+          return {
+            resume_id: resume.resume_id,
+            name: resume.original_filename,
+            date: new Date(resume.uploaded_at).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+            score,
+            status: (score >= 80 ? "Optimized" : "Needs Improvement") as ResumeStats["status"],
+          };
+        }),
+      );
     }
 
+    fetchResumeStats()
+      .then(setResumes)
+      .catch(() => setResumes([]));
   }, [user]);
 
   return (
@@ -88,7 +65,10 @@ const ResumesTable = ({ isHome }: { isHome: boolean }) => {
               </th>
             </tr>
           </thead>
-          {isHome ? <ResumeCard resume={latestResumes} /> : <ResumeCard resume={resumes} />}
+          <ResumeCard
+            resume={resumes}
+            onDelete={(id) => setResumes((prev) => prev.filter((r) => r.resume_id !== id))}
+          />
         </table>
       </div>
     </div>
