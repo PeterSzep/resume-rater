@@ -1,10 +1,18 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List
+from pathlib import Path
 import models
 import schemas, crud
 from database import get_db
 from fastapi.middleware.cors import CORSMiddleware
+import uuid
+import io
+import PyPDF2
+
+UPLOADS_DIR = Path(__file__).parent.parent / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
 
 app = FastAPI()
 
@@ -79,24 +87,69 @@ async def read_resumes_for_account(account_id: int, db: Session = Depends(get_db
         raise HTTPException(status_code=404, detail="Account not found")
     return crud.get_resumes_for_account(db, account_id=account_id)
 
+@app.get("/resumes/{resume_id}/file")
+async def serve_resume_file(resume_id: int, db: Session = Depends(get_db)):
+    resume = crud.get_resume_by_id(db, resume_id=resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    file_path = Path(resume.file_path)
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found on disk")
+    return FileResponse(
+        path=str(file_path),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{resume.original_filename}"'},
+    )
+
 @app.post("/accounts/{account_id}/resumes/", response_model=schemas.ResumeResponse)
-async def create_resume(account_id: int, resume: schemas.ResumeCreate, db: Session = Depends(get_db)):
+async def create_resume(account_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
     account = db.query(models.Accounts).filter(models.Accounts.user_id == account_id).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
-    
-    resume.account_id = account_id
+
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted")
+
+    contents = await file.read()
+    file_size = len(contents)
+
+    unique_filename = f"{uuid.uuid4()}_{file.filename}"
+    file_path = UPLOADS_DIR / unique_filename
+    with open(file_path, "wb") as f:
+        f.write(contents)
+
+    extracted_text = ""
+    try:
+        pdf_reader = PyPDF2.PdfReader(io.BytesIO(contents))
+        for page in pdf_reader.pages:
+            extracted_text += page.extract_text() or ""
+    except Exception:
+        extracted_text = ""
+
+    resume = schemas.ResumeCreate(
+        account_id=account_id,
+        original_filename=file.filename,
+        file_path=str(file_path),
+        extracted_text=extracted_text,
+        file_size=file_size,
+    )
     return crud.create_resume(db=db, resume=resume)
 
-@app.delete("/resumes/{account_id}/resumes/{resume_id}")
+@app.delete("/accounts/{account_id}/resumes/{resume_id}")
 async def remove_resume_for_user(account_id: int, resume_id: int, db: Session = Depends(get_db)):
     account = db.query(models.Accounts).filter(models.Accounts.user_id == account_id).first()
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
 
-    success = crud.delete_resume(db, resume_id=resume_id)
-    if not success:
+    resume = crud.get_resume_by_id(db, resume_id=resume_id)
+    if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
+
+    file_path = Path(resume.file_path)
+    if file_path.exists():
+        file_path.unlink()
+
+    crud.delete_resume(db, resume_id=resume_id)
     return {"detail": "Resume deleted successfully"}
 
 
