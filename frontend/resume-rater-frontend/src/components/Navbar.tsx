@@ -1,7 +1,25 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {type User } from "../context/UserContext";
 
 const Navbar = ({ user }: { user: User | null }) => {
+  const { pathname } = useLocation();
+
+  const navLink = (to: string, label: string) => {
+    const active = pathname === to;
+    return (
+      <Link
+        to={to}
+        className={
+          active
+            ? "text-sm font-semibold text-primary border-b-2 border-primary pb-1"
+            : "text-sm font-medium text-slate-600 hover:text-primary transition-colors"
+        }
+      >
+        {label}
+      </Link>
+    );
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-primary/10 bg-white/80 backdrop-blur-md px-6 lg:px-20">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between">
@@ -15,18 +33,8 @@ const Navbar = ({ user }: { user: User | null }) => {
             </h1>
           </div>
           <nav className="hidden md:flex items-center gap-6">
-            <Link
-              className="text-sm font-semibold text-primary border-b-2 border-primary pb-1"
-              to="/home"
-            >
-              Home
-            </Link>
-            <a
-              className="text-sm font-medium text-slate-600 hover:text-primary transition-colors"
-              href="#"
-            >
-              Resumes
-            </a>
+            {navLink("/home", "Home")}
+            {navLink("/resumes", "Resumes")}
             <a
               className="text-sm font-medium text-slate-600 hover:text-primary transition-colors"
               href="#"

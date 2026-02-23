@@ -2,21 +2,25 @@ import { useState, useEffect } from "react";
 import { useUser } from "../context/UserContext";
 import Navbar from "../components/Navbar";
 import StatsCard from "../components/StatsCard";
-import ResumeCard from "../components/ResumeCard";
 import UploadResume from "../components/UploadResume";
-import { type ResumeStats } from "../types/resumeTypes";
-import { getResumesForAccount, getLatestResumesForAccount } from "../api/resumes";
-import { getRatingsForAccount, getRatingsForResume } from "../api/ratings";
+import { getResumesForAccount} from "../api/resumes";
+import { getRatingsForAccount} from "../api/ratings";
+import ResumesTable from "../components/ResumesTable";
+import { useNavigate } from "react-router-dom";
 
 
 const Home = () => {
   const { user } = useUser();
+  const navigation = useNavigate();
 
-  const [latestResumes, setLatestResumes] = useState<ResumeStats[]>([]);
   const [highestScore, setHighestScore] = useState<number | "N/A">("N/A");
   const [averageScore, setAverageScore] = useState<number | "N/A">("N/A");
   const [resumeCount, setResumeCount] = useState<number | "N/A">("N/A");
   const [ratingsCount, setRatingsCount] = useState<number | "N/A">("N/A");
+
+  const goToResumes = () => {
+    navigation("/resumes");
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -27,24 +31,6 @@ const Home = () => {
       })
       .catch(() => setResumeCount("N/A"));
     
-    getLatestResumesForAccount(user).then(async (resumes) => {
-      const resumeStats = await Promise.all(
-        resumes.map(async (resume) => {
-          const ratings = await getRatingsForResume(user.user_id, resume.resume_id);
-          const latest = ratings[0];
-          const score = latest?.overall_score ?? 0;
-          return {
-            resume_id: resume.resume_id,
-            name: resume.original_filename,
-            date: new Date(resume.uploaded_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
-            score,
-            status: (score >= 80 ? "Optimized" : "Needs Improvement") as ResumeStats["status"],
-          };
-        })
-      );
-      setLatestResumes(resumeStats);
-    }).catch(() => setLatestResumes([]));
-
     getRatingsForAccount(user)
       .then((ratings) => {
         if (ratings.length === 0) {
@@ -109,40 +95,15 @@ const Home = () => {
               <h2 className="text-xl font-bold text-slate-900">
                 Recent Activity
               </h2>
-              <button className="text-sm font-semibold text-primary hover:underline flex items-center gap-1">
+              <button
+                className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
+                onClick={goToResumes}
+              >
                 View all resumes
-                <span className="material-symbols-outlined text-sm">
-                  arrow_forward
-                </span>
               </button>
             </div>
 
-            <div className="glass-card-light rounded-xl overflow-hidden shadow-sm border border-primary/5">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50/50 border-b border-slate-100">
-                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Resume Name
-                      </th>
-                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Date Reviewed
-                      </th>
-                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        AI Score
-                      </th>
-                      <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <ResumeCard resume={latestResumes} />
-                </table>
-              </div>
-            </div>
+            <ResumesTable isHome={true} />
           </div>
           <UploadResume />
         </div>

@@ -58,9 +58,12 @@ async def read_resume(resume_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Resume not found")
     return resume
 
-@app.get("/resumes/", response_model=List[schemas.ResumeResponse])
-async def read_resumes(db: Session = Depends(get_db)):
-    return crud.get_resumes(db)
+@app.get("/accounts/{account_id}/resumes/", response_model=List[schemas.ResumeResponse])
+async def read_resumes(account_id: int, db: Session = Depends(get_db)):
+    account = db.query(models.Accounts).filter(models.Accounts.user_id == account_id).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+    return crud.get_resumes_for_account(db, account_id=account_id)
 
 @app.get("/accounts/{account_id}/resumes/newest", response_model=List[schemas.ResumeResponse])
 async def read_newest_resumes_for_account(account_id: int, db: Session = Depends(get_db)):

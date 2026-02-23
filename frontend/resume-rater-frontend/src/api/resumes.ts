@@ -34,3 +34,4 @@ export async function getLatestResumesForAccount(user: User): Promise<Resume[]> 
         throw new Error(errorData.detail || 'Failed to fetch latest resume');
     }
 }
+
