@@ -1,4 +1,5 @@
 import { BASE_URL } from './index';
+import {type User} from '../context/UserContext';
 
 export async function regsiterUser(name : string, email : string, password : string) {
     const response = await fetch(`${BASE_URL}/accounts/`, {
@@ -38,5 +39,18 @@ export async function loginUser(email : string, password : string, ) {
     } else {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to login user');
+    }
+}
+
+export async function deleteUser(user : User) {
+    const response = await fetch(`${BASE_URL}/accounts/${user.user_id}/`, {
+        method: 'DELETE',
+    });
+
+    if(response.ok) {
+        return true;
+    } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to delete user');
     }
 }

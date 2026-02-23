@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import {type User } from "../context/UserContext";
 
 const Navbar = ({ user }: { user: User | null }) => {
@@ -14,12 +15,12 @@ const Navbar = ({ user }: { user: User | null }) => {
             </h1>
           </div>
           <nav className="hidden md:flex items-center gap-6">
-            <a
+            <Link
               className="text-sm font-semibold text-primary border-b-2 border-primary pb-1"
-              href="#"
+              to="/home"
             >
               Home
-            </a>
+            </Link>
             <a
               className="text-sm font-medium text-slate-600 hover:text-primary transition-colors"
               href="#"
@@ -43,11 +44,14 @@ const Navbar = ({ user }: { user: User | null }) => {
               {user?.full_name ?? "—"}
             </span>
           </div>
-          <div className="size-10 rounded-full border-2 border-primary/20 flex items-center justify-center bg-primary/10">
+          <Link
+            to="/account"
+            className="size-10 rounded-full border-2 border-primary/20 flex items-center justify-center bg-primary/10 hover:bg-primary/20 transition-colors"
+          >
             <span className="material-symbols-outlined text-primary text-xl">
               account_circle
             </span>
-          </div>
+          </Link>
           <button className="md:hidden text-slate-600">
             <span className="material-symbols-outlined">menu</span>
           </button>

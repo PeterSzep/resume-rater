@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 
 export type User = {
   user_id: number;
@@ -10,12 +11,13 @@ export type User = {
 type UserContextType = {
   user: User | null;
   login: (user: User) => void;
-  logout: () => void;
+  logout: (deleting?: boolean) => void;
 };
 
 const UserContext = createContext<UserContextType | null>(null);
 
 const STORAGE_KEY = "user";
+
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
@@ -28,9 +30,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUser(user);
   };
 
-  const logout = () => {
+  const navigate = useNavigate();
+
+  const logout = (deleting: boolean = false) => {
     localStorage.removeItem(STORAGE_KEY);
     setUser(null);
+    if (!deleting) {
+      navigate("/login", {replace: true});
+    }else{
+      navigate("/register", {replace: true});
+    }
   };
 
   return (
