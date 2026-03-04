@@ -35,12 +35,7 @@ const Navbar = ({ user }: { user: User | null }) => {
           <nav className="hidden md:flex items-center gap-6">
             {navLink("/home", "Home")}
             {navLink("/resumes", "Resumes")}
-            <a
-              className="text-sm font-medium text-slate-600 hover:text-primary transition-colors"
-              href="#"
-            >
-              AI Review
-            </a>
+            {navLink("/ai-overview", "AI Overview")}
           </nav>
         </div>
         <div className="flex items-center gap-4">

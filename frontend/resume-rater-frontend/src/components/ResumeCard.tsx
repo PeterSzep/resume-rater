@@ -5,7 +5,7 @@ import { deleteResume } from "../api/resumes";
 import { BASE_URL } from "../api";
 
 const ResumeCard = ({ resume, onDelete }: { resume: ResumeStats[]; onDelete: (resumeId: number) => void }) => {
-  const {user} = useUser();
+  const { user } = useUser();
 
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -24,6 +24,7 @@ const ResumeCard = ({ resume, onDelete }: { resume: ResumeStats[]; onDelete: (re
     try {
       await deleteResume(accountId, resumeId);
       onDelete(resumeId);
+      window.location.reload();
     } catch (error) {
       alert("Failed to delete resume: " + (error as Error).message);
     }
@@ -40,7 +41,7 @@ const ResumeCard = ({ resume, onDelete }: { resume: ResumeStats[]; onDelete: (re
                   description
                 </span>
               </div>
-              <span className="font-semibold text-slate-900">{r.name}</span>
+              <span className="font-semibold text-slate-900 max-w-[200px] truncate" title={r.name}>{r.name}</span>
             </div>
           </td>
           <td className="px-6 py-4 text-sm text-slate-500">{r.date}</td>
