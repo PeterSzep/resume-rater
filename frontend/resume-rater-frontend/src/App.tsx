@@ -17,7 +17,7 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/resumes" element={<Resumes />} />
           <Route path="/account" element={<Account />} />
-          <Route path="/ai-overview" element={<AIOverview />} />
+          <Route path="/ai-overview/:resumeId" element={<AIOverview />} />
         </Routes>
       </UserProvider>
     </BrowserRouter>

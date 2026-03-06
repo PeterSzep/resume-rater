@@ -9,7 +9,9 @@ from database import get_db
 from fastapi.middleware.cors import CORSMiddleware
 import uuid
 import io
+import json
 import PyPDF2
+import anthropic
 
 UPLOADS_DIR = Path(__file__).parent.parent / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
@@ -170,9 +172,59 @@ async def read_ratings_for_resume(account_id: int, resume_id: int, db: Session =
         raise HTTPException(status_code=404, detail="Ratings not found")
     return ratings
 
+RATING_PROMPT = """You are an expert resume reviewer. Analyze the resume below and return ONLY a JSON object with no extra text.
+
+The JSON must follow this exact structure:
+{
+  "overall_score": <float 0-100>,
+  "criteria_scores": {
+    "formatting": <float 0-100>,
+    "experience": <float 0-100>,
+    "skills": <float 0-100>,
+    "education": <float 0-100>,
+    "impact": <float 0-100>
+  },
+  "feedback": "<2-3 sentence overall summary of the resume>",
+  "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
+  "improvements": ["<improvement 1>", "<improvement 2>", "<improvement 3>"]
+}
+
+Scoring guide:
+- formatting: layout clarity, length, readability
+- experience: relevance and depth of work history
+- skills: technical and soft skills alignment
+- education: academic background
+- impact: use of metrics and quantifiable achievements
+
+Resume:
+"""
+
 @app.post("/resumes/{resume_id}/ratings/", response_model=schemas.RatingResponse)
-async def create_rating(resume_id: int, rating: schemas.RatingCreate, db: Session = Depends(get_db)):
-    rating.resume_id = resume_id
+async def create_rating(resume_id: int, db: Session = Depends(get_db)):
+    resume = crud.get_resume_by_id(db, resume_id=resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    client = anthropic.Anthropic()
+    message = client.messages.create(
+        model="claude-opus-4-6",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": RATING_PROMPT + resume.extracted_text}],
+    )
+
+    try:
+        data = json.loads(message.content[0].text)
+    except (json.JSONDecodeError, IndexError, KeyError):
+        raise HTTPException(status_code=502, detail="Failed to parse AI response")
+
+    rating = schemas.RatingCreate(
+        resume_id=resume_id,
+        overall_score=data["overall_score"],
+        criteria_scores=data["criteria_scores"],
+        feedback=data["feedback"],
+        strengths=data["strengths"],
+        improvements=data["improvements"],
+    )
     return crud.create_rating(db=db, rating=rating)
 
 @app.delete("/resumes/{resume_id}/ratings/{rating_id}")

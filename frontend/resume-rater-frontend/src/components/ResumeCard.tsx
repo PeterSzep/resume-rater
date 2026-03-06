@@ -3,9 +3,11 @@ import { type ResumeStats } from "../types/resumeTypes";
 import { useUser } from "../context/UserContext";
 import { deleteResume } from "../api/resumes";
 import { BASE_URL } from "../api";
+import { useNavigate } from "react-router-dom";
 
 const ResumeCard = ({ resume, onDelete }: { resume: ResumeStats[]; onDelete: (resumeId: number) => void }) => {
   const { user } = useUser();
+  const navigate = useNavigate();
 
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -93,13 +95,16 @@ const ResumeCard = ({ resume, onDelete }: { resume: ResumeStats[]; onDelete: (re
                     Show Resume
                   </button>
                   <button
-                    onClick={() => setOpenMenuId(null)}
+                    onClick={() => {
+                      setOpenMenuId(null);
+                      navigate("/ai-overview/" + r.resume_id);
+                    }}
                     className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                   >
                     <span className="material-symbols-outlined text-base">
                       rate_review
                     </span>
-                    Review Again
+                    Review Resume
                   </button>
                   <div className="border-t border-slate-100 my-1" />
                   <button

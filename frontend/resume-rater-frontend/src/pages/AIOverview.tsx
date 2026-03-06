@@ -8,6 +8,7 @@ import Navbar from "../components/Navbar";
 import ScoreCard from "../components/ScoreCard";
 import { useUser } from "../context/UserContext";
 import { BASE_URL } from "../api/index";
+import { getResumeById } from "../api/resumes";
 import type { Resume } from "../types/resumeTypes";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -17,8 +18,9 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 const AIOverview = () => {
   const { user } = useUser();
-  const { resumeId } = useParams<{ resumeId: string }>();
 
+  const [isRating, setIsRating] = useState(true);
+  const { resumeId } = useParams<{ resumeId: string }>();
   const [resume, setResume] = useState<Resume | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -28,11 +30,22 @@ const AIOverview = () => {
 
   useEffect(() => {
     if (!resumeId) return;
-    fetch(`${BASE_URL}/resume/${resumeId}`)
-      .then((r) => r.json())
-      .then(setResume)
-      .catch(() => {});
+    getResumeById(Number(resumeId)).then(setResume);
+
+    
   }, [resumeId]);
+
+  if (isRating) {
+    return (
+      <div className="font-display text-slate-900 antialiased min-h-screen flex flex-col items-center justify-center gap-6">
+        <span className="material-symbols-outlined text-6xl text-primary animate-spin">progress_activity</span>
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-slate-800">Analyzing your resume...</h2>
+          <p className="text-slate-500 mt-1">Claude is reviewing your resume. This may take a moment.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="font-display text-slate-900 antialiased min-h-screen">
@@ -41,14 +54,13 @@ const AIOverview = () => {
       {/* Main */}
       <main className="max-w-[1440px] mx-auto px-4 md:px-10 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
           {/* Left: PDF Viewer */}
           <div className="lg:col-span-8 flex flex-col gap-6">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Interactive Analysis</h1>
                 <p className="text-slate-500 mt-1">
-                  Reviewing:{" "}
+                  Reviewing:
                   <span className="font-medium text-slate-700">
                     {resume?.original_filename ?? "Loading..."}
                   </span>

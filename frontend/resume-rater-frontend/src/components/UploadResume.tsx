@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
 import { useUser } from "../context/UserContext";
 import { uploadResume } from "../api/resumes";
+import { useNavigate } from "react-router-dom";
 
-const UploadResume = () => {
+const UploadResume = ({ isHomePage }: { isHomePage: boolean }) => {
   const { user } = useUser();
+  const navigation = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -13,8 +15,12 @@ const UploadResume = () => {
 
     setUploading(true);
     try {
-      await uploadResume(user, file);
-      window.location.reload();
+      const resume = await uploadResume(user, file);
+      const resumeId = resume.resume_id;
+      if(isHomePage){
+        navigation("/ai-overview/" + resumeId);
+        // console.log("Navigating to AI Overview page...");
+      }
     } catch (error) {
       alert("Failed to upload resume: " + (error as Error).message);
     } finally {

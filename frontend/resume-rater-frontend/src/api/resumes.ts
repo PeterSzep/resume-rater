@@ -19,6 +19,22 @@ export async function getResumesForAccount(user: User): Promise<Resume[]> {
     }
 }
 
+export async function getResumeById(resumeId: number): Promise<Resume> {
+    const response = await fetch(`${BASE_URL}/resume/${resumeId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fetch resume');
+    }
+}
+
 export async function getLatestResumesForAccount(user: User): Promise<Resume[]> {
     const response = await fetch(`${BASE_URL}/accounts/${user.user_id}/resumes/newest`, {
         method: 'GET',
