@@ -12,6 +12,9 @@ import io
 import json
 import PyPDF2
 import anthropic
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 UPLOADS_DIR = Path(__file__).parent.parent / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
@@ -172,7 +175,9 @@ async def read_ratings_for_resume(account_id: int, resume_id: int, db: Session =
         raise HTTPException(status_code=404, detail="Ratings not found")
     return ratings
 
-RATING_PROMPT = """You are an expert resume reviewer. Analyze the resume below and return ONLY a JSON object with no extra text.
+
+
+RATING_PROMPT = """You are a resume reviewer. Try to be reasonable not too harsh. Analyze the resume below and return ONLY a JSON object with no extra text.
 
 The JSON must follow this exact structure:
 {
@@ -205,7 +210,7 @@ async def create_rating(resume_id: int, db: Session = Depends(get_db)):
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    client = anthropic.Anthropic()
+    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     message = client.messages.create(
         model="claude-opus-4-6",
         max_tokens=1024,
@@ -213,7 +218,13 @@ async def create_rating(resume_id: int, db: Session = Depends(get_db)):
     )
 
     try:
-        data = json.loads(message.content[0].text)
+        raw = message.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```", 2)[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+            raw = raw.rsplit("```", 1)[0].strip()
+        data = json.loads(raw)
     except (json.JSONDecodeError, IndexError, KeyError):
         raise HTTPException(status_code=502, detail="Failed to parse AI response")
 

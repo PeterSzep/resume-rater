@@ -9,7 +9,15 @@ import ScoreCard from "../components/ScoreCard";
 import { useUser } from "../context/UserContext";
 import { BASE_URL } from "../api/index";
 import { getResumeById } from "../api/resumes";
-import type { Resume } from "../types/resumeTypes";
+import { createRating } from "../api/ratings";
+import type { Resume, Rating } from "../types/resumeTypes";
+
+function scoreLabel(score: number): string {
+  if (score >= 85) return "Excellent Potential";
+  if (score >= 70) return "Strong Candidate";
+  if (score >= 50) return "Needs Improvement";
+  return "Major Revision Needed";
+}
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -22,6 +30,7 @@ const AIOverview = () => {
   const [isRating, setIsRating] = useState(true);
   const { resumeId } = useParams<{ resumeId: string }>();
   const [resume, setResume] = useState<Resume | null>(null);
+  const [rating, setRating] = useState<Rating | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1);
@@ -30,9 +39,12 @@ const AIOverview = () => {
 
   useEffect(() => {
     if (!resumeId) return;
-    getResumeById(Number(resumeId)).then(setResume);
-
-    
+    const id = Number(resumeId);
+    getResumeById(id).then(setResume);
+    createRating(id).then((r) => {
+      setRating(r);
+      setIsRating(false);
+    });
   }, [resumeId]);
 
   if (isRating) {
@@ -140,24 +152,18 @@ const AIOverview = () => {
 
           {/* Right: AI Insights Sidebar */}
           <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
-            <ScoreCard score={85} resultText="Excellent Potential" />
+            <ScoreCard score={rating?.overall_score ?? 0} resultText={scoreLabel(rating?.overall_score ?? 0)} />
             <div className="space-y-4">
               <CollapsibleInsight
                 title="Strengths"
                 icon="check_circle"
-                items={[
-                  { text: "Clear hierarchical structure makes it easy for recruiters to scan within 6 seconds.", icon: "task_alt" },
-                  { text: "Strong tech stack alignment with modern UX/UI requirements.", icon: "task_alt" },
-                ]}
+                items={(rating?.strengths ?? []).map((s) => ({ text: s, icon: "task_alt" }))}
               />
 
               <CollapsibleInsight
                 title="Weaknesses"
                 icon="warning"
-                items={[
-                  { text: "Lacks quantifiable achievements that demonstrate impact.", icon: "error_outline" },
-                  { text: "Some bullet points are too generic and could be more specific.", icon: "error_outline" },
-                ]}
+                items={(rating?.improvements ?? []).map((s) => ({ text: s, icon: "error_outline" }))}
                 variant="weakness"
               />
 
@@ -165,25 +171,12 @@ const AIOverview = () => {
                 <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 transition-colors list-none">
                   <div className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-primary bg-primary/10 p-1.5 rounded-lg text-xl">lightbulb</span>
-                    <span className="font-bold text-slate-800">AI Suggestions</span>
+                    <span className="font-bold text-slate-800">AI Feedback</span>
                   </div>
                   <span className="material-symbols-outlined text-slate-400 group-open:rotate-180 transition-transform">expand_more</span>
                 </summary>
-                <div className="px-4 pb-4 space-y-3">
-                  <div className="p-3 bg-alice-blue/50 rounded-lg border border-sky-blue/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-bold text-sky-blue uppercase">Actionable Tip</span>
-                      <span className="text-[10px] font-bold text-slate-400">HIGH IMPACT</span>
-                    </div>
-                    <p className="text-xs text-slate-700 leading-relaxed font-semibold italic">"Quantify the design system impact. Instead of 'reducing time', say 'reduced front-end development cycles by 30% saving ~$120k annually'."</p>
-                  </div>
-                  <div className="p-3 bg-alice-blue/50 rounded-lg border border-sky-blue/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-bold text-sky-blue uppercase">Actionable Tip</span>
-                      <span className="text-[10px] font-bold text-slate-400">QUICK FIX</span>
-                    </div>
-                    <p className="text-xs text-slate-700 leading-relaxed font-semibold italic">"Swap 'Developed' with more powerful verbs like 'Orchestrated' or 'Engineered' in your second experience role."</p>
-                  </div>
+                <div className="px-4 pb-4">
+                  <p className="text-xs text-slate-700 leading-relaxed">{rating?.feedback ?? ""}</p>
                 </div>
               </details>
             </div>

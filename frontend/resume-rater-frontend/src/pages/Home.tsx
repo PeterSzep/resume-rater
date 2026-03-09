@@ -38,11 +38,11 @@ const Home = () => {
           setRatingsCount("N/A");
         } else {
           const max = Math.max(...ratings.map((r) => r.overall_score));
-          setHighestScore(max);
+          setHighestScore(Number(max.toPrecision(2)));
           const avg =
             ratings.reduce((sum, r) => sum + r.overall_score, 0) /
             ratings.length;
-          setAverageScore(avg);
+          setAverageScore(Number(avg.toPrecision(2)));
           setRatingsCount(ratings.length);
         }
       })

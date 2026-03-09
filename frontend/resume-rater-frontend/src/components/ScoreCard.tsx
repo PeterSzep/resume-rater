@@ -1,4 +1,7 @@
+const CIRCUMFERENCE = 2 * Math.PI * 42;
+
 const ScoreCard = ({score, resultText } : {score: number, resultText: string}) => {
+  const offset = CIRCUMFERENCE * (1 - score / 100);
   return (
     <div className="p-8 rounded-2xl shadow-lg flex flex-col items-center text-center bg-white/70 backdrop-blur-md border border-white/40">
       <div className="relative size-40 flex items-center justify-center mb-4">
@@ -19,7 +22,7 @@ const ScoreCard = ({score, resultText } : {score: number, resultText: string}) =
             r="42"
             strokeLinecap="round"
             strokeWidth="8"
-            style={{ strokeDasharray: "263.89", strokeDashoffset: "39.58" }}
+            style={{ strokeDasharray: CIRCUMFERENCE, strokeDashoffset: offset }}
           />
         </svg>
         <div className="absolute flex flex-col items-center justify-center">
